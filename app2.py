@@ -1,6 +1,11 @@
 import streamlit as st
 import torch
 from transformers import BertTokenizer, BertForSequenceClassification
+import gdown
+
+url="https://drive.google.com/file/d/1FP6l-vN-gFBzM-zb_E0bsw-jXY0BHr0N/view?usp=drive_link"
+output = "bert_model.pth"
+gdown.download(url, output)
 
 @st.cache_resource
 def load_model():
