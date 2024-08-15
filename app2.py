@@ -3,6 +3,8 @@ import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import gdown
 import os
+import pandas as pd
+import csv
 
 # Streamlit app
 st.title('Question Answer Quality Predictor')
@@ -81,26 +83,61 @@ def predict_label(text):
     
     return original_label
 
-# Text input
+def interpret_score(score):
+    if score == 1:
+        return "Poor quality"
+    elif score == 2:
+        return "Fair quality"
+    elif score == 3:
+        return "Good quality"
+    else:
+        return "Excellent quality"
+
+# File uploader
+uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
+
+if uploaded_file is not None:
+    # Read the CSV file
+    df = pd.read_csv(uploaded_file)
+    
+    # Check if the CSV has the required column
+    if 'text' not in df.columns:
+        st.error("The CSV file must contain a 'text' column with the question and answer text.")
+    else:
+        # Process each row and make predictions
+        predictions = []
+        for text in df['text']:
+            prediction = predict_label(text)
+            predictions.append(prediction)
+        
+        # Add predictions to the dataframe
+        df['predicted_score'] = predictions
+        df['interpretation'] = df['predicted_score'].apply(interpret_score)
+        
+        # Display the results
+        st.write("Predictions:")
+        st.dataframe(df)
+        
+        # Offer to download the results
+        csv = df.to_csv(index=False)
+        st.download_button(
+            label="Download results as CSV",
+            data=csv,
+            file_name="predictions.csv",
+            mime="text/csv"
+        )
+else:
+    st.write("Please upload a CSV file to make predictions.")
+
+# Optional: Add a text input for single predictions
+st.write("Or enter a single question and answer for prediction:")
 text_input = st.text_area("Enter the question and answer text:", height=200)
 
-if st.button('Predict'):
+if st.button('Predict Single Entry'):
     if text_input:
-        # Make prediction
         prediction = predict_label(text_input)
-        
         if prediction is not None:
-            # Display result
             st.write(f"Predicted quality score: {prediction}")
-            
-            # Interpret the score
-            if prediction == 1:
-                st.write("Interpretation: Poor quality")
-            elif prediction == 2:
-                st.write("Interpretation: Fair quality")
-            elif prediction == 3:
-                st.write("Interpretation: Good quality")
-            else:
-                st.write("Interpretation: Excellent quality")
+            st.write(f"Interpretation: {interpret_score(prediction)}")
     else:
         st.write("Please enter some text to make a prediction.")
