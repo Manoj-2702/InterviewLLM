@@ -101,12 +101,12 @@ if uploaded_file is not None:
     df = pd.read_csv(uploaded_file)
     
     # Check if the CSV has the required column
-    if 'text' not in df.columns:
+    if 'question_cand_answer' not in df.columns:
         st.error("The CSV file must contain a 'text' column with the question and answer text.")
     else:
         # Process each row and make predictions
         predictions = []
-        for text in df['text']:
+        for text in df['question_cand_answer']:
             prediction = predict_label(text)
             predictions.append(prediction)
         
